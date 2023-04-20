@@ -9,14 +9,14 @@ import mk.ukim.finki.lvemt.model.enumaration.Category;
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long bookId;
+    private Long id;
 
     private String name;
 
     @Enumerated(EnumType.STRING)
     private Category category;
 
-    @OneToOne
+    @ManyToOne
     private Author author;
 
     private Integer availableCopies;

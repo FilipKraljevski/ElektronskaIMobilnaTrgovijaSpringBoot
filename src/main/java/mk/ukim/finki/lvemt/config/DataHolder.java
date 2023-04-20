@@ -1,11 +1,9 @@
-package mk.ukim.finki.lvemt.bootstrap;
+package mk.ukim.finki.lvemt.config;
 
 import mk.ukim.finki.lvemt.model.enumaration.Category;
-import mk.ukim.finki.lvemt.model.enumaration.Role;
 import mk.ukim.finki.lvemt.service.AuthorService;
 import mk.ukim.finki.lvemt.service.BookService;
 import mk.ukim.finki.lvemt.service.CountryService;
-import mk.ukim.finki.lvemt.service.UserService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -15,19 +13,15 @@ public class DataHolder {
     private final AuthorService authorService;
     private final BookService bookService;
     private final CountryService countryService;
-    private final UserService userService;
 
-    public DataHolder(AuthorService authorService, BookService bookService, CountryService countryService, UserService userService) {
+    public DataHolder(AuthorService authorService, BookService bookService, CountryService countryService) {
         this.authorService = authorService;
         this.bookService = bookService;
         this.countryService = countryService;
-        this.userService = userService;
     }
 
     @PostConstruct
     public void initData(){
-        userService.save("admin", "a", "librarian", "librarian", Role.ROLE_LIBRARIAN);
-        userService.save("user", "u", "client", "client", Role.ROLE_USER);
         countryService.save("Macedonia", "Europe");
         countryService.save("Russia", "Europe");
         countryService.save("China", "Asia");

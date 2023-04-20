@@ -2,13 +2,18 @@ package mk.ukim.finki.lvemt.service.impl;
 
 import mk.ukim.finki.lvemt.model.Author;
 import mk.ukim.finki.lvemt.model.Book;
+import mk.ukim.finki.lvemt.model.dto.BookDto;
 import mk.ukim.finki.lvemt.model.enumaration.Category;
+import mk.ukim.finki.lvemt.model.exception.AuthorNotFoundException;
+import mk.ukim.finki.lvemt.model.exception.BookNotFoundException;
 import mk.ukim.finki.lvemt.repository.AuthorRepository;
 import mk.ukim.finki.lvemt.repository.BookRepository;
 import mk.ukim.finki.lvemt.service.BookService;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BookServiceImpl implements BookService {
@@ -26,59 +31,55 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Book findById(Long id) {
-        Book book = bookRepository.findById(id).orElse(null);
-        if(book == null){
-            return null;
-        }
-        return book;
+    public Optional<Book> findById(Long id) {
+        Book book = bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException(id));
+        return Optional.of(book);
     }
 
     @Override
     public Book save(String name, Category category, Long authorId, Integer availableCopies) {
-        Author author = authorRepository.findById(authorId).orElse(null);
-        if(author == null){
-            return null;
-        }
-        if(availableCopies < 0){
-            availableCopies = 0;
-        }
+        Author author = authorRepository.findById(authorId).orElseThrow(() -> new AuthorNotFoundException(authorId));
         Book book = new Book(name, category, author, availableCopies);
         return bookRepository.save(book);
     }
 
     @Override
-    public Book update(Long bookId, String name, Category category, Long authorId, Integer availableCopies) {
-        Book book = findById(bookId);
-        Author author = authorRepository.findById(authorId).orElse(null);
-        if(author == null || book == null){
-            return null;
-        }
-        book.setName(name);
-        book.setCategory(category);
+    public Optional<Book> save(BookDto bookDto) {
+        Author author = authorRepository.findById(bookDto.getAuthor()).orElseThrow(() ->
+                new AuthorNotFoundException(bookDto.getAuthor()));
+        return Optional.of(bookRepository.save(new Book(bookDto.getName(), bookDto.getCategory(), author,
+                bookDto.getAvailableCopies())));
+    }
+
+    @Override
+    public Optional<Book> update(Long id, BookDto bookDto) {
+        Book book = findById(id).orElseThrow(() -> new BookNotFoundException(id));
+        Author author = authorRepository.findById(bookDto.getAuthor()).orElseThrow(() ->
+                new AuthorNotFoundException(bookDto.getAuthor()));
+        book.setName(bookDto.getName());
+        book.setCategory(bookDto.getCategory());
         book.setAuthor(author);
-        if(availableCopies < 0){
-            availableCopies = 0;
+        if(bookDto.getAvailableCopies() < 0){
+            bookDto.setAvailableCopies(0);
         }
-        book.setAvailableCopies(availableCopies);
-        return bookRepository.save(book);
+        book.setAvailableCopies(bookDto.getAvailableCopies());
+        return Optional.of(bookRepository.save(book));
     }
 
     @Override
-    public Book delete(Long id) {
-        Book book = findById(id);
+    public Optional<Book> delete(Long id) {
+        Book book = findById(id).orElseThrow();
         bookRepository.delete(book);
-        return book;
+        return Optional.of(book);
     }
 
     @Override
-    public Book markAsTaken(Long id) {
-        Book book = findById(id);
-        if(book.getAvailableCopies() == 0){
-            return null;
+    public Optional<Book> markAsTaken(Long id) {
+        Book book = findById(id).orElseThrow();
+        if(book.getAvailableCopies() != 0){
+            book.setAvailableCopies(book.getAvailableCopies()-1);
+            return Optional.of(bookRepository.save(book));
         }
-        book.setAvailableCopies(book.getAvailableCopies()-1);
-        bookRepository.save(book);
-        return book;
+        return Optional.empty();
     }
 }
